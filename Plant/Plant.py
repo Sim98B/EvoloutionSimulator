@@ -8,7 +8,6 @@ class Plant:
 
         props = np.random.dirichlet([1, 1, 1])
         self.alpha, self.beta, self.gamma = props
-
         self.height = self.alpha * self.total_energy
         self.leaf   = self.beta * self.total_energy
         self.roots  = self.gamma * self.total_energy
@@ -92,9 +91,3 @@ class Plant:
         child.roots  = child.gamma * child.total_energy
 
         return child
-
-p = Plant()
-print(p.height, p.roots, p.leaf)
-for i in range(10):
-    prole = p.generate_offspring()
-    print(prole.height, prole.roots, prole.leaf)

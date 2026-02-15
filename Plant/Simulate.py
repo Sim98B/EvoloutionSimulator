@@ -1,15 +1,17 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-#import plotly.graph_objects as go
 from Plant import Plant
 from World import World
 #np.random.seed(0)
+
 # --- setup mondo ---
-world = World(width=10, height=10)
+size = 5
+world = World(width=size, height=size)
 starting_plants = 50
-plants = [Plant(total_energy = 1) for _ in range(starting_plants)]
-positions = np.random.uniform(0, 10, (starting_plants, 2))
+plants = [Plant(total_energy=1) for _ in range(starting_plants)]
+positions = np.random.uniform(0, size, (starting_plants, 2))
+
 stats_df = pd.DataFrame(columns=[
     'day',
     'height_mean', 'height_std', 'height_min', 'height_max',
@@ -20,8 +22,8 @@ stats_df = pd.DataFrame(columns=[
 for pos, plant in zip(positions, plants):
     world.place_plant(pos[0], pos[1], plant)
 
-# --- simulazione per 10 giorni ---
-for day in range(100):
+# --- simulazione ---
+for day in range(500):
     print(f"\n=== Day {day + 1} ===")
     print(len(world.plants))
 
@@ -33,14 +35,13 @@ for day in range(100):
     # ordiniamo le piante per altezza decrescente per gestire luce
     plants_sorted = sorted(world.plants, key=lambda x: x[2].height, reverse=True)
 
-    # calcolo luce (sun) considerando sovrapposizione e ombreggiamento
+    # calcolo luce considerando sovrapposizione
     for i, (x, y, plant) in enumerate(plants_sorted):
         sun_received = sun
-        for j in range(i):  # piante più alte già processate
+        for j in range(i):
             xj, yj, other = plants_sorted[j]
             dist = np.hypot(x - xj, y - yj)
             if dist < (plant.leaf + other.leaf):
-                # riduzione luce proporzionale a sovrapposizione e altezza
                 sun_received *= max(0, 1 - (other.height - plant.height) / (dist + 0.1))
         plant.sun_received = sun_received
 
@@ -57,12 +58,14 @@ for day in range(100):
     for x, y, plant in plants_sorted:
         plant.daily_adaptation(plant.sun_received, plant.water_received)
 
+    # rimuovi piante morte
     world.plants = [(x, y, p) for (x, y, p) in world.plants if p.alive]
 
-    if world.plants:  # se ci sono piante vive
+    if world.plants:
         heights = np.array([p.height for _, _, p in world.plants])
         leaves = np.array([p.leaf for _, _, p in world.plants])
-        roots = np.array([p.roots for _, _, p in world.plants])
+        roots  = np.array([p.roots for _, _, p in world.plants])
+        ages   = np.array([p.age for _, _, p in world.plants])
 
         stats_df.loc[len(stats_df)] = [
             day + 1,
@@ -71,20 +74,28 @@ for day in range(100):
             roots.mean(), roots.std(), roots.min(), roots.max()
         ]
     else:
-        # nessuna pianta viva, riempi NaN
-        stats_df.loc[len(stats_df)] = [day + 1] + [np.nan] * 12
+        stats_df.loc[len(stats_df)] = [day + 1] + [np.nan]*16
 
-    # mostra stato del mondo come testo
-    """for i, (x, y, plant) in enumerate(world.plants):
-        print(f"Plant {i}: Height={plant.height:.3f}, Leaf={plant.leaf:.3f}, Roots={plant.roots:.3f}")"""
-    if day % 10 == 0 or day == 10:
+    if day % 5 == 0 or day == 99:
         world.show_world()
-fig, axes = plt.subplots(1, 3, figsize=(18, 5), sharex=True)
 
+    new_plants = []
+    for x, y, p in world.plants:
+        energy_available = p.sun_received + p.water_received
+        total_mass = p.height + p.leaf + p.roots
+        if energy_available >= 1.5 * total_mass:
+            child = p.generate_offspring(trait_std=0.05, mutation_prob=0.05, mutation_std=0.1)
+            offset = np.random.uniform(-1, 1, size=2)
+            child_x = np.clip(x + offset[0], 0, world.width)
+            child_y = np.clip(y + offset[1], 0, world.height)
+            new_plants.append((child_x, child_y, child))
+
+    world.plants.extend(new_plants)
+
+# --- plot ---
+fig, axes = plt.subplots(1, 3, figsize=(24, 5), sharex=True)
 attributes = ['height', 'leaf', 'roots']
 colors = ['green', 'lime', 'saddlebrown']
-
-#print(stats_df.iloc[-1])
 
 for ax, attr, color in zip(axes, attributes, colors):
     mean = stats_df[f'{attr}_mean']
@@ -92,13 +103,8 @@ for ax, attr, color in zip(axes, attributes, colors):
     min_ = stats_df[f'{attr}_min']
     max_ = stats_df[f'{attr}_max']
 
-    # linea media
     ax.plot(stats_df['day'], mean, color=color, lw=2, label=f'{attr} mean')
-
-    # alone ± std
     ax.fill_between(stats_df['day'], mean - std, mean + std, color=color, alpha=0.2, label='±1 std')
-
-    # linee max e min
     ax.plot(stats_df['day'], max_, color=color, lw=1, linestyle='--', label='max')
     ax.plot(stats_df['day'], min_, color=color, lw=1, linestyle='--', label='min')
 
