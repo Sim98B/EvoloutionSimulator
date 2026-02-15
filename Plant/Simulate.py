@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+#import plotly.graph_objects as go
 from Plant import Plant
 from World import World
 #np.random.seed(0)
 # --- setup mondo ---
 world = World(width=10, height=10)
-starting_plants = 10
-plants = [Plant(total_energy = 1.5) for _ in range(starting_plants)]
+starting_plants = 50
+plants = [Plant(total_energy = 1) for _ in range(starting_plants)]
 positions = np.random.uniform(0, 10, (starting_plants, 2))
 stats_df = pd.DataFrame(columns=[
     'day',
@@ -83,7 +84,7 @@ fig, axes = plt.subplots(1, 3, figsize=(18, 5), sharex=True)
 attributes = ['height', 'leaf', 'roots']
 colors = ['green', 'lime', 'saddlebrown']
 
-print(stats_df.iloc[-1])
+#print(stats_df.iloc[-1])
 
 for ax, attr, color in zip(axes, attributes, colors):
     mean = stats_df[f'{attr}_mean']
@@ -109,3 +110,61 @@ for ax, attr, color in zip(axes, attributes, colors):
 plt.suptitle('Daily Plant Statistics with Mean ± Std and Min/Max', fontsize=16)
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()
+
+"""attributes = ['height', 'leaf', 'roots']
+colors = ['green', 'lime', 'saddlebrown']
+
+fig = go.Figure()
+
+for attr, color in zip(attributes, colors):
+    fig.add_trace(go.Scatter(
+        x=stats_df['day'],
+        y=stats_df[f'{attr}_mean'],
+        mode='lines+markers',
+        name=f'{attr} mean',
+        line=dict(color=color, width=2),
+        hovertemplate=
+        f"{attr} mean: %{y:.3f}<br>Day: %{x}<extra></extra>"
+    ))
+
+    # ± std come area
+    fig.add_trace(go.Scatter(
+        x=list(stats_df['day']) + list(stats_df['day'])[::-1],
+        y=list(stats_df[f'{attr}_mean'] + stats_df[f'{attr}_std']) +
+          list((stats_df[f'{attr}_mean'] - stats_df[f'{attr}_std'])[::-1]),
+        fill='toself',
+        fillcolor=color.replace('green','rgba(0,128,0,0.2)').replace('lime','rgba(50,205,50,0.2)').replace('saddlebrown','rgba(139,69,19,0.2)'),
+        line=dict(color='rgba(255,255,255,0)'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # max
+    fig.add_trace(go.Scatter(
+        x=stats_df['day'],
+        y=stats_df[f'{attr}_max'],
+        mode='lines',
+        line=dict(color=color, width=1, dash='dash'),
+        name=f'{attr} max',
+        hovertemplate=f"{attr} max: %{y:.3f}<br>Day: %{x}<extra></extra>"
+    ))
+
+    # min
+    fig.add_trace(go.Scatter(
+        x=stats_df['day'],
+        y=stats_df[f'{attr}_min'],
+        mode='lines',
+        line=dict(color=color, width=1, dash='dot'),
+        name=f'{attr} min',
+        hovertemplate=f"{attr} min: %{y:.3f}<br>Day: %{x}<extra></extra>"
+    ))
+
+fig.update_layout(
+    title="Daily Plant Statistics (Interactive)",
+    xaxis_title="Day",
+    yaxis_title="Value",
+    hovermode="x unified",
+    template="plotly_white"
+)
+
+fig.show()"""
