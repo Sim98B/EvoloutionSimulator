@@ -14,7 +14,7 @@ size = 5
 world = World(width=size, height=size)
 
 starting_plants = 50
-plants = [Plant(total_energy=1) for _ in range(starting_plants)]
+plants = [Plant(total_energy=1, traits=[0.33,0.33,0.33]) for _ in range(starting_plants)]
 positions = np.random.uniform(0, size, (starting_plants, 2))
 
 for pos, plant in zip(positions, plants):
@@ -26,6 +26,7 @@ for pos, plant in zip(positions, plants):
 
 stats_df = pd.DataFrame(columns=[
     'day',
+    'population',
     'height_mean', 'height_std', 'height_min', 'height_max',
     'leaf_mean',   'leaf_std',   'leaf_min',   'leaf_max',
     'roots_mean',  'roots_std',  'roots_min',  'roots_max'
@@ -114,6 +115,7 @@ for day in range(50):
 
         stats_df.loc[len(stats_df)] = [
             day + 1,
+            len(world.plants),
             heights.mean(), heights.std(), heights.min(), heights.max(),
             leaves.mean(),  leaves.std(),  leaves.min(),  leaves.max(),
             roots.mean(),   roots.std(),   roots.min(),   roots.max()
@@ -155,18 +157,23 @@ for day in range(50):
     if day % 1 == 0:
         world.show_world()
 
-    time.sleep(0.5)
+    time.sleep(0)
 
 # =============================
 # Plot finale (IDENTICO AL VECCHIO)
 # =============================
 
-fig, axes = plt.subplots(1, 3, figsize=(24, 5), sharex=True)
+fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
+
+axes = axes.flatten()
 
 attributes = ['height', 'leaf', 'roots']
 colors = ['green', 'lime', 'saddlebrown']
 
-for ax, attr, color in zip(axes, attributes, colors):
+# ---- PRIMI 3 SUBPLOT (come prima) ----
+for i, (attr, color) in enumerate(zip(attributes, colors)):
+
+    ax = axes[i]
 
     mean = stats_df[f'{attr}_mean']
     std  = stats_df[f'{attr}_std']
@@ -180,10 +187,18 @@ for ax, attr, color in zip(axes, attributes, colors):
     ax.plot(stats_df['day'], min_, color=color, lw=1, linestyle='--', label='min')
 
     ax.set_title(attr.capitalize())
-    ax.set_xlabel('Day')
     ax.set_ylabel(attr.capitalize())
     ax.legend(fontsize=8)
 
-plt.suptitle('Daily Plant Statistics (Discrete Selection Model)', fontsize=16)
+# ---- QUARTO SUBPLOT: POPOLAZIONE ----
+ax_pop = axes[3]
+ax_pop.plot(stats_df['day'], stats_df['population'], color='black', lw=2)
+ax_pop.set_title("Population")
+ax_pop.set_ylabel("Number of plants")
+
+for ax in axes:
+    ax.set_xlabel("Day")
+
+plt.suptitle('Daily Plant Statistics + Population', fontsize=16)
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()

@@ -52,3 +52,19 @@ class World:
         self.sun_patches = np.random.uniform(0, world_size, (n_sun, 2))
         self.water_patches = np.random.uniform(0, world_size, (n_water, 2))
         return self.sun_patches, self.water_patches
+
+    def energy_half(self, world_size, n_sun, n_water):
+
+        half = world_size / 2
+
+        # Sole solo nella metà sinistra
+        sun_x = np.random.uniform(0, half, n_sun)
+        sun_y = np.random.uniform(0, world_size, n_sun)
+        self.sun_patches = np.column_stack((sun_x, sun_y))
+
+        # Acqua solo nella metà destra
+        water_x = np.random.uniform(half, world_size, n_water)
+        water_y = np.random.uniform(0, world_size, n_water)
+        self.water_patches = np.column_stack((water_x, water_y))
+
+        return self.sun_patches, self.water_patches
