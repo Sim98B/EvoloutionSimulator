@@ -38,15 +38,3 @@ class World:
         sun = 1 - rain_factor + np.random.normal(0, 0.1)
         sun = np.clip(sun, 0, 1)
         return water, sun
-
-#np.random.seed(0)
-world = World(10, 10)
-piante = 10
-# aggiungi due piante in posizioni casuali
-plants = [Plant() for i in range(piante)]
-positions = np.random.uniform(0, 10, (piante, 2))  # coordinate continue
-
-"""for pos, plant in zip(positions, plants):
-    world.place_plant(pos[0], pos[1], plant)
-
-world.plot_scatter()"""

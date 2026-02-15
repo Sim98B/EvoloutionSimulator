@@ -61,29 +61,3 @@ class Plant:
 
         if total_mass < 0.05:
             self.alive = False
-
-#p = Plant()
-#print(f"Height: {p.height:.3f}, leaf: {p.leaf:.3f}, roots: {p.roots:.3f}")
-
-"""for day in range(10):
-    rain_factor = np.random.uniform(0, 1)
-
-    water = rain_factor
-    sun = 1 - rain_factor + np.random.normal(0, 0.1)
-
-    sun = np.clip(sun, 0, 1)
-
-    #print(sun, water)
-
-    p.daily_adaptation(sun, water)"""
-
-"""for day in range(20):
-    #print(f"{day + 1}")
-    if day < 10:
-        water = 0.9
-        sun = 0.1
-    else:
-        water = 0.2
-        sun = 0.9
-
-    p.daily_adaptation(sun, water)"""
