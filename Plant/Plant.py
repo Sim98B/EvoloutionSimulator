@@ -47,9 +47,9 @@ class Plant:
         self.leaf += self.beta * growth
         self.roots += self.gamma * growth
 
-        """threshold = 0.01
+        threshold = 0.05
         if self.height < threshold or self.leaf < threshold or self.roots < threshold:
-            self.alive = False"""
+            self.alive = False
 
         # DECAY e MORTALITÀ
         total_mass = self.height + self.leaf + self.roots
