@@ -1,4 +1,5 @@
 import numpy as np
+import random
 #np.random.seed(0)
 
 class Plant:
@@ -12,6 +13,7 @@ class Plant:
         self.leaf   = self.beta * self.total_energy
         self.roots  = self.gamma * self.total_energy
         self. stress_days = 0
+        self.age = 0
         self.alive = True
 
     def daily_adaptation(self, sun, water):
@@ -61,3 +63,38 @@ class Plant:
 
         if total_mass < 0.05:
             self.alive = False
+
+        if self.alive:
+            self.age += 1
+
+    def generate_offspring(self, trait_std=0.05, mutation_prob=0.05, mutation_std=0.1):
+        """
+        Genera un figlio della pianta con tratti derivati dai genitori
+        """
+        # campioniamo i tratti
+        alpha = np.random.normal(self.alpha, trait_std)
+        beta  = np.random.normal(self.beta, trait_std)
+        gamma = np.random.normal(self.gamma, trait_std)
+
+        # mutazione rara
+        if random.random() < mutation_prob:
+            alpha += np.random.normal(0, mutation_std)
+            beta  += np.random.normal(0, mutation_std)
+            gamma += np.random.normal(0, mutation_std)
+
+        traits = np.clip([alpha, beta, gamma], 0.01, None)
+        traits /= np.sum(traits)
+
+        child = Plant(total_energy=self.total_energy)
+        child.alpha, child.beta, child.gamma = traits
+        child.height = child.alpha * child.total_energy
+        child.leaf   = child.beta  * child.total_energy
+        child.roots  = child.gamma * child.total_energy
+
+        return child
+
+p = Plant()
+print(p.height, p.roots, p.leaf)
+for i in range(10):
+    prole = p.generate_offspring()
+    print(prole.height, prole.roots, prole.leaf)
