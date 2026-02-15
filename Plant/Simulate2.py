@@ -1,17 +1,19 @@
+import time
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from Plant2 import Plant
-from World import World
+from World2 import World
 
 # =============================
 # Setup mondo
 # =============================
 
-size = 7.5
+size = 5
 world = World(width=size, height=size)
 
-starting_plants = 100
+starting_plants = 50
 plants = [Plant(total_energy=1) for _ in range(starting_plants)]
 positions = np.random.uniform(0, size, (starting_plants, 2))
 
@@ -33,8 +35,8 @@ stats_df = pd.DataFrame(columns=[
 # Parametri ambiente
 # =============================
 
-n_sun_patches = 100
-n_water_patches = 100
+n_sun_patches = 25
+n_water_patches = 25
 min_energy_to_survive = 1
 reproduction_threshold = 2
 
@@ -42,13 +44,12 @@ reproduction_threshold = 2
 # Simulazione
 # =============================
 
-for day in range(500):
+for day in range(50):
 
     print(f"\n=== Day {day + 1} ===")
     print("Plants alive:", len(world.plants))
 
-    sun_patches = np.random.uniform(0, size, (n_sun_patches, 2))
-    water_patches = np.random.uniform(0, size, (n_water_patches, 2))
+    sun_patches, water_patches = world.energy(world_size=size, n_sun=50, n_water=50)
 
     plants_sorted = sorted(world.plants, key=lambda x: x[2].height, reverse=True)
 
@@ -151,8 +152,10 @@ for day in range(500):
         print(f"simulation ended after {day + 1} days")
         break
 
-    if day % 5 == 0:
+    if day % 1 == 0:
         world.show_world()
+
+    time.sleep(0.5)
 
 # =============================
 # Plot finale (IDENTICO AL VECCHIO)

@@ -8,6 +8,8 @@ class World:
         self.width = width
         self.height = height
         self.plants = []  # lista di tuple (x, y, Plant)
+        self.sun_patches = None
+        self.water_patches = None
 
     def place_plant(self, x, y, plant):
         self.plants.append((x, y, plant))
@@ -18,6 +20,20 @@ class World:
         ax.set_ylim(0, self.height)
         ax.set_aspect('equal')
         ax.set_title("Plant visualization")
+        if self.sun_patches is not None:
+            ax.scatter(self.sun_patches[:, 0],
+                       self.sun_patches[:, 1],
+                       color='yellow',
+                       s=30,
+                       label="Sun patches")
+
+            # --- WATER PATCHES ---
+        if self.water_patches is not None:
+            ax.scatter(self.water_patches[:, 0],
+                       self.water_patches[:, 1],
+                       color='blue',
+                       s=30,
+                       label="Water patches")
 
         for x, y, p in self.plants:
             # cerchio radici (marrone)
@@ -32,9 +48,7 @@ class World:
 
         plt.show()
 
-    def energy(self):
-        rain_factor = np.random.uniform(0, 1)
-        water = rain_factor
-        sun = 1 - rain_factor + np.random.normal(0, 0.1)
-        sun = np.clip(sun, 0, 1)
-        return water, sun
+    def energy(self, world_size, n_sun, n_water):
+        self.sun_patches = np.random.uniform(0, world_size, (n_sun, 2))
+        self.water_patches = np.random.uniform(0, world_size, (n_water, 2))
+        return self.sun_patches, self.water_patches
