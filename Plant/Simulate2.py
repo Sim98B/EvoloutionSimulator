@@ -45,7 +45,7 @@ reproduction_threshold = 2
 # Simulazione
 # =============================
 
-for day in range(50):
+for day in range(150):
 
     print(f"\n=== Day {day + 1} ===")
     print("Plants alive:", len(world.plants))
