@@ -6,16 +6,16 @@ from Mushroom import Mush
 from Mush import Mush
 from Wood import Wood
 
-np.random.seed(0) # seed 0 e 30 cluster
+#np.random.seed(0) # seed 0 e 30 cluster e 50 funghi
 plt.ion()
 fig, ax = plt.subplots()
 
-mushrooms = 150
+mushrooms = 50
 generations = 50
 survival_threshold = 0.3
-pause = 0.05
+pause = 0.01
 
-wood = Wood(size = 50, resolution = 200, hatch=3, humidity_clusters=50)
+wood = Wood(size = 50, resolution = 200, hatch=3)#, humidity_clusters=50)
 wood.mush=[Mush(x=np.random.uniform(0,wood.size), y=np.random.uniform(0,wood.size)) for i in range(mushrooms)]
 wood.display(ax)
 plt.pause(pause)

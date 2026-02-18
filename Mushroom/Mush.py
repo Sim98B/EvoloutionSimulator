@@ -13,9 +13,11 @@ class Mush():
             "c": np.random.rand()
         }
         self.mycelium_genes = {
-            "d": np.random.rand(),
-            "e": np.random.rand(),
-            "f": np.random.rand()
+            "d": np.random.rand(),  # efficienza assorbimento
+            "e": np.random.rand(),  # costo manutenzione
+            "f": np.random.rand(),  # dispersion/espansione
+            "g": np.random.rand(),  # growth rate
+            "h": np.random.rand()  # branching density
         }
         self.stem_genes = {
             "g": np.random.rand(),
@@ -33,10 +35,13 @@ class Mush():
         self.cap_energy_cost = self.cap_genes["b"] * self.cap
         self.cap_risk = 1 + self.cap_genes["c"] * self.cap
         # Mycelium
-        self.energy_absorbed = self.mycelium * (1 + self.mycelium_genes["d"])
-        self.maintenance_cost = self.mycelium_genes["e"] * self.mycelium
         self.expansion_speed = self.mycelium / (1 + self.mycelium_genes["f"])
-        # Stem
+        self.mycelial_growth_rate = (self.mycelium * (0.2 + self.mycelium_genes["g"]))
+        self.branching_density = 0.5 + self.mycelium_genes["h"]
+        self.energy_absorbed = (self.mycelium * (1 + self.mycelium_genes["d"]) * np.log1p(self.branching_density))
+        self.maintenance_cost = (self.mycelium * self.mycelium_genes["e"] * (1 + self.branching_density))
+        self.growth_cost = self.mycelial_growth_rate * 0.5
+        self.total_mycelium_cost = self.maintenance_cost + self.growth_cost
         # Stem
         self.stem_dispersion_radius = self.stem * (1 + self.stem_genes["g"])
         self.stem_fail_prob = 1 + self.stem_genes["h"] * self.stem
@@ -53,16 +58,14 @@ class Mush():
         radius = self.mycelium * 0.25
         local_humidity = wood_env.get_humidity(self.x, self.y, radius)
         competitors = 0
-        for other in population:
+        population_sorted = sorted(population, key=lambda m: m.mycelial_growth_rate * m.branching_density, reverse=True)
+        for other in population_sorted:
             if other is self:
                 continue
             dist = np.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
             if dist < radius:
                 competitors += 1
-
-        # divisione equa (incluso se stesso)
         share_factor = 1 / (competitors + 1)
-
         energy_gain = self.energy_absorbed * local_humidity * share_factor
         cost = self.cap_energy_cost + self.stem_structural_cost + self.maintenance_cost
         risk_factor = 1 / (self.cap_risk + self.stem_fail_prob)
