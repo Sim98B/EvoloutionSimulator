@@ -1,6 +1,6 @@
 import numpy as np
 
-class Mush():
+class Mush:
     def __init__(self, x:float | int, y: float):
         self.x = x
         self.y = y
@@ -56,7 +56,8 @@ class Mush():
 
     def compute_fitness(self, wood_env, population):
         radius = self.mycelium * 0.25
-        local_humidity = wood_env.get_humidity(self.x, self.y, radius)
+        local_humidity = wood_env.get_nutrients(self.x, self.y, radius, wood_env.humidity_map)
+        local_substrate = wood_env.get_nutrients(self.x, self.y, radius, wood_env.organic_map)
         competitors = 0
         population_sorted = sorted(population, key=lambda m: m.mycelial_growth_rate * m.branching_density, reverse=True)
         for other in population_sorted:
@@ -66,7 +67,7 @@ class Mush():
             if dist < radius:
                 competitors += 1
         share_factor = 1 / (competitors + 1)
-        energy_gain = self.energy_absorbed * local_humidity * share_factor
+        energy_gain = self.energy_absorbed * (local_humidity + local_substrate) * share_factor
         cost = self.cap_energy_cost + self.stem_structural_cost + self.maintenance_cost
         risk_factor = 1 / (self.cap_risk + self.stem_fail_prob)
         self.fitness = (energy_gain - cost) * risk_factor
@@ -89,7 +90,7 @@ class Mush():
             new_mycelium = max(0.1, self.mycelium + np.random.normal(0, 0.5))
             new_spore = max(0.1, self.spore + np.random.normal(0, 0.5))
 
-            max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius * 15
+            max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius# * 15
             min_radius = self.cap
             mean_dispersion = max_dispersion * 0.4
             radius = min_radius + np.random.exponential(scale=mean_dispersion)
@@ -100,8 +101,9 @@ class Mush():
             new_x = np.clip(self.x + dx, 0, wood_env.size)
             new_y = np.clip(self.y + dy, 0, wood_env.size)
 
-            local_hum = wood_env.get_humidity(new_x, new_y, new_mycelium * 0.25)
-            local_quality = local_hum
+            local_hum = wood_env.get_nutrients(new_x, new_y, new_mycelium * 0.25, wood_env.humidity_map)
+            local_sub = wood_env.get_nutrients(new_x, new_y, new_mycelium * 0.25, wood_env.organic_map)
+            local_quality = local_hum + local_sub
             germ_prob = np.clip(new_spore_genes["j"] * local_quality, 0, 1)  # usa gene 'j' per germinabilità
 
             if np.random.rand() < germ_prob:
