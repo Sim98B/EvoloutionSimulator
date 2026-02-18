@@ -13,13 +13,13 @@ class Wood:
         self.hatch = hatch
         self.humidity_map = self._generate_clusters(n_clusters=humidity_clusters) if humidity_clusters  else self._generate_field()
         self.organic_map = self._generate_clusters(n_clusters=humidity_clusters) if organic_clusters else self._generate_field()
-        self.nutrients_map = self.humidity_map + self.organic_map
+        self.nutrients_map = (self.humidity_map + self.organic_map).astype(np.float32)
 
     def _generate_field(self):
         field = np.random.rand(self.resolution, self.resolution)
         field = gaussian_filter(field, sigma=self.hatch)
         field = (field - field.min()) / (field.max() - field.min())
-        #field = field**0.5
+        #field = field**0.9
         return field
 
     def _generate_clusters(self, n_clusters):
@@ -34,21 +34,20 @@ class Wood:
         field = field / field.max()
         return field
 
-    def get_nutrients(self, x, y, radius, field):
-        res = self.resolution
-        cx = int(x / self.size * (res - 1))
-        cy = int(y / self.size * (res - 1))
+    def get_nutrients(self, x, y, radius, grid):
+        res = grid.shape[0]
+        cx, cy = int(x / self.size * (res - 1)), int(y / self.size * (res - 1))
         r_pix = int(radius * res)
-        values = []
-        for i in range(cx - r_pix, cx + r_pix + 1):
-            for j in range(cy - r_pix, cy + r_pix + 1):
-                if 0 <= i < res and 0 <= j < res:
-                    if (i - cx) ** 2 + (j - cy) ** 2 <= r_pix ** 2:
-                        values.append(field[j, i])
-        if values:
-            return np.mean(values)
-        else:
-            return 0
+
+        x_idx = np.arange(cx - r_pix, cx + r_pix + 1)
+        y_idx = np.arange(cy - r_pix, cy + r_pix + 1)
+        x_idx = x_idx[(x_idx >= 0) & (x_idx < res)]
+        y_idx = y_idx[(y_idx >= 0) & (y_idx < res)]
+
+        X, Y = np.meshgrid(x_idx, y_idx)
+        mask = (X - cx) ** 2 + (Y - cy) ** 2 <= r_pix ** 2
+
+        return grid[Y, X][mask].mean()
 
     def display(self, ax):
         ax.clear()
@@ -77,7 +76,6 @@ class Wood:
             ax.scatter([m.x for m in self.mush],
                            [m.y for m in self.mush],
                            c="brown",
-                           #s=35,
                            s=[m.stem * 5 for m in self.mush],
                            edgecolor="black")
             for m in self.mush:

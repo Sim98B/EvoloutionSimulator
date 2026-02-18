@@ -6,16 +6,18 @@ import matplotlib.pyplot as plt
 from Mush import Mush
 from Wood import Wood
 
+np.random.seed(1)
+
 plt.ion()
 fig, ax = plt.subplots()
 
-mushrooms = 150
-generations = 50
+mushrooms = 25
+generations = 100
 survival_threshold = 0.3
 pause = 0.01
 
 # Inizializza il mondo e i funghi
-wood = Wood(size=50, resolution=200, hatch=3)
+wood = Wood(size=100, resolution=200, hatch=5)
 wood.mush = [Mush(x=np.random.uniform(0, wood.size), y=np.random.uniform(0, wood.size))
              for _ in range(mushrooms)]
 wood.display(ax)
@@ -46,7 +48,7 @@ for gen in range(generations):
     # Riproduzione
     new_mushrooms = []
     for m in wood.mush:
-        if m.fitness >= survival_threshold + ((survival_threshold / 100) * 10):
+        if m.fitness >= survival_threshold + ((survival_threshold / 100) * 5):
             offspring = m.reproduce(wood)
             new_mushrooms.extend(offspring)
 
@@ -70,6 +72,8 @@ for gen in range(generations):
         stats[f'{key}_std'].append(arr.std() if len(arr) > 0 else 0)
         stats[f'{key}_min'].append(arr.min() if len(arr) > 0 else 0)
         stats[f'{key}_max'].append(arr.max() if len(arr) > 0 else 0)
+
+    print(gen + 1)
 
 plt.ioff()
 

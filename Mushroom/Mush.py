@@ -4,7 +4,7 @@ class Mush:
     def __init__(self, x:float | int, y: float):
         self.x = x
         self.y = y
-        total_size = np.random.normal(7,2)
+        total_size = np.random.normal(12,2)
         allocation = np.random.dirichlet(alpha=np.ones(4))
         self.cap, self.stem, self.mycelium, self.spore = total_size * allocation
         self.cap_genes = {
@@ -54,65 +54,87 @@ class Mush:
 
         self.fitness = 0.0
 
+    def compute_competitors(self, population):
+        positions = np.array([[m.x, m.y] for m in population])
+        my_pos = np.array([self.x, self.y])
+        distances = np.linalg.norm(positions - my_pos, axis=1)
+        mask_self = distances > 0
+        competitors = np.sum(distances[mask_self] < self.mycelium * 0.25)
+        return competitors
+
     def compute_fitness(self, wood_env, population):
         radius = self.mycelium * 0.25
-        local_humidity = wood_env.get_nutrients(self.x, self.y, radius, wood_env.humidity_map)
-        local_substrate = wood_env.get_nutrients(self.x, self.y, radius, wood_env.organic_map)
-        competitors = 0
+        local_food = wood_env.get_nutrients(self.x, self.y, radius, wood_env.nutrients_map)
         population_sorted = sorted(population, key=lambda m: m.mycelial_growth_rate * m.branching_density, reverse=True)
-        for other in population_sorted:
-            if other is self:
-                continue
-            dist = np.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
-            if dist < radius:
-                competitors += 1
-        share_factor = 1 / (competitors + 1)
-        energy_gain = self.energy_absorbed * (local_humidity + local_substrate) * share_factor
+        competitors = self.compute_competitors(population_sorted)
+        share_factor = 1 / np.sqrt(competitors + 1)
+        energy_gain = self.energy_absorbed * local_food * share_factor
         cost = self.cap_energy_cost + self.stem_structural_cost + self.maintenance_cost
         risk_factor = 1 / (self.cap_risk + self.stem_fail_prob)
         self.fitness = (energy_gain - cost) * risk_factor
         return self.fitness
 
     def reproduce(self, wood_env):
-        offspring_list = []
-
         base_spores = self.cap + self.spore + self.stem
-        expected_spores = max(1, int(np.random.poisson(lam=base_spores * 0.2 * self.spore_output)))
+        expected_spores = max(1, np.random.poisson(lam=base_spores * 0.2 * self.spore_output))
 
-        for _ in range(expected_spores):
-            new_cap_genes = {k: np.clip(v + np.random.normal(0, 0.01), 0, 1) for k, v in self.cap_genes.items()}
-            new_mycelium_genes = {k: np.clip(v + np.random.normal(0, 0.01), 0, 1) for k, v in self.mycelium_genes.items()}
-            new_stem_genes = {k: np.clip(v + np.random.normal(0, 0.01), 0, 1) for k, v in self.stem_genes.items()}
-            new_spore_genes = {k: np.clip(v + np.random.normal(0, 0.01), 0, 1) for k, v in self.spore_genes.items()}
+        if expected_spores == 0:
+            return []
 
-            new_cap = max(0.1, self.cap + np.random.normal(0, 0.5))
-            new_stem = max(0.1, self.stem + np.random.normal(0, 0.5))
-            new_mycelium = max(0.1, self.mycelium + np.random.normal(0, 0.5))
-            new_spore = max(0.1, self.spore + np.random.normal(0, 0.5))
+        # ---- Genera mutazioni vettorialmente ----
+        # Fenotipi
+        new_traits = np.random.normal(
+            loc=[self.cap, self.stem, self.mycelium, self.spore],
+            scale=0.5,
+            size=(expected_spores, 4)
+        )
+        new_traits = np.clip(new_traits, 0.1, None)  # valori minimi 0.1
 
-            max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius# * 15
-            min_radius = self.cap
-            mean_dispersion = max_dispersion * 0.4
-            radius = min_radius + np.random.exponential(scale=mean_dispersion)
-            radius = min(radius, max_dispersion)
-            angle = np.random.uniform(0, 2 * np.pi)
-            dx = radius * np.cos(angle)
-            dy = radius * np.sin(angle)
-            new_x = np.clip(self.x + dx, 0, wood_env.size)
-            new_y = np.clip(self.y + dy, 0, wood_env.size)
+        # Geni
+        def mutate_genes(genes):
+            arr = np.array(list(genes.values()))
+            mutated = np.clip(arr + np.random.normal(0, 0.01, size=(expected_spores, len(arr))), 0, 1)
+            return [dict(zip(genes.keys(), row)) for row in mutated]
 
-            local_hum = wood_env.get_nutrients(new_x, new_y, new_mycelium * 0.25, wood_env.humidity_map)
-            local_sub = wood_env.get_nutrients(new_x, new_y, new_mycelium * 0.25, wood_env.organic_map)
-            local_quality = local_hum + local_sub
-            germ_prob = np.clip(new_spore_genes["j"] * local_quality, 0, 1)  # usa gene 'j' per germinabilità
+        cap_genes_list = mutate_genes(self.cap_genes)
+        mycelium_genes_list = mutate_genes(self.mycelium_genes)
+        stem_genes_list = mutate_genes(self.stem_genes)
+        spore_genes_list = mutate_genes(self.spore_genes)
 
-            if np.random.rand() < germ_prob:
-                child = Mush(new_x, new_y)  # scale_factor=1, poi aggiorniamo i fenotipi e geni
-                child.cap, child.stem, child.mycelium, child.spore = new_cap, new_stem, new_mycelium, new_spore
-                child.cap_genes = new_cap_genes
-                child.mycelium_genes = new_mycelium_genes
-                child.stem_genes = new_stem_genes
-                child.spore_genes = new_spore_genes
-                offspring_list.append(child)
+        # ---- Dispersione e posizione ----
+        max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius * (wood_env.size / 5)
+        min_radius = self.cap
+        mean_dispersion = max_dispersion * 0.4
+
+        angles = np.random.uniform(0, 2 * np.pi, expected_spores)
+        radii = min_radius + np.random.exponential(scale=mean_dispersion, size=expected_spores)
+        radii = np.clip(radii, min_radius, max_dispersion)
+
+        dx = radii * np.cos(angles)
+        dy = radii * np.sin(angles)
+        new_xs = np.clip(self.x + dx, 0, wood_env.size)
+        new_ys = np.clip(self.y + dy, 0, wood_env.size)
+
+        # ---- Germinazione vettoriale ----
+        # Nutrienti
+        qualities = np.array([
+            wood_env.get_nutrients(x, y, myc * 0.25, wood_env.nutrients_map)
+            for x, y, myc in zip(new_xs, new_ys, new_traits[:, 2])
+        ])
+        germ_probs = np.clip([g["j"] for g in spore_genes_list] * qualities, 0, 1)
+        germ_mask = np.random.rand(expected_spores) < germ_probs
+
+        # ---- Crea oggetti Mush per quelli che germinano ----
+        offspring_list = []
+        for i in np.where(germ_mask)[0]:
+            child = Mush(new_xs[i], new_ys[i])
+            child.cap, child.stem, child.mycelium, child.spore = new_traits[i]
+            child.cap_genes = cap_genes_list[i]
+            child.mycelium_genes = mycelium_genes_list[i]
+            child.stem_genes = stem_genes_list[i]
+            child.spore_genes = spore_genes_list[i]
+            offspring_list.append(child)
+
+        return offspring_list
 
         return offspring_list
