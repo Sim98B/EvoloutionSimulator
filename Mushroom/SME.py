@@ -1,38 +1,49 @@
 import numpy as np
 import matplotlib
+
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from Mush import Mush
 from Wood import Wood
 
-#np.random.seed(0) # seed 0 e 30 cluster e 50 funghi
 plt.ion()
 fig, ax = plt.subplots()
 
-mushrooms = 50
+mushrooms = 150
 generations = 50
 survival_threshold = 0.3
 pause = 0.01
 
-wood = Wood(size = 50, resolution = 200, hatch=3)#, humidity_clusters=50, organic_clusters=30)
-wood.mush=[Mush(x=np.random.uniform(0,wood.size), y=np.random.uniform(0,wood.size)) for i in range(mushrooms)]
+# Inizializza il mondo e i funghi
+wood = Wood(size=50, resolution=200, hatch=3)
+wood.mush = [Mush(x=np.random.uniform(0, wood.size), y=np.random.uniform(0, wood.size))
+             for _ in range(mushrooms)]
 wood.display(ax)
 plt.pause(pause)
-gen = 0
+
+# DataFrame-like structure per salvare statistiche fenotipi
+stats = {
+    'gen': [],
+    'cap_mean': [], 'cap_std': [], 'cap_min': [], 'cap_max': [],
+    'stem_mean': [], 'stem_std': [], 'stem_min': [], 'stem_max': [],
+    'mycelium_mean': [], 'mycelium_std': [], 'mycelium_min': [], 'mycelium_max': [],
+    'spore_mean': [], 'spore_std': [], 'spore_min': [], 'spore_max': [],
+    'population': []
+}
+
 for gen in range(generations):
-#while len(wood.mush) > 0:
     if len(wood.mush) == 0:
         print(f"Sim terminated after {gen} generations")
         break
-    #wood.humidity_map = wood._generate_humidity()
-    #wood.hummus_map = wood._generate_hummus()
-    #wood.humidity_map = wood._generate_humidity_clusters(wood.humidity_clusters)
-    #wood.hummus_map = wood._generate_hummus_clusters(wood.hummus_clusters)
+
+    # Calcola fitness
     for m in wood.mush:
         m.compute_fitness(wood, wood.mush)
 
+    # Sopravvivenza
     wood.mush = [m for m in wood.mush if m.fitness > survival_threshold]
 
+    # Riproduzione
     new_mushrooms = []
     for m in wood.mush:
         if m.fitness >= survival_threshold + ((survival_threshold / 100) * 10):
@@ -41,9 +52,58 @@ for gen in range(generations):
 
     wood.mush.extend(new_mushrooms)
 
-    #print(f"Gen {gen + 1} | Survivors: {len(wood.mush)} | Fit medio: {np.mean([m.fitness for m in wood.mush]):.4f} | GR: {np.mean([m.mycelial_growth_rate for m in wood.mush]):.4f} | Den: {np.mean([m.branching_density for m in wood.mush]):.4f}")
-    #print(
-    #    f"Gen {gen + 1} | Survivors: {len(wood.mush)} | Fit medio: {np.mean([m.fitness for m in wood.mush]):.4f} | Cap: {np.mean([m.cap_size for m in wood.mush]):.4f} | Myc: {np.mean([m.mycelium_density for m in wood.mush]):.4f} | Stem: {np.mean([m.stem_length for m in wood.mush]):.4f} | Spore: {np.mean([m.spore_size for m in wood.mush]):.4f} | New: {len(new_mushrooms)}")
-    gen += 1
+    # Aggiorna display
     wood.display(ax)
     plt.pause(pause)
+
+    # ---- Raccogli statistiche fenotipi ----
+    caps = np.array([m.cap for m in wood.mush])
+    stems = np.array([m.stem for m in wood.mush])
+    myc = np.array([m.mycelium for m in wood.mush])
+    spores = np.array([m.spore for m in wood.mush])
+
+    stats['gen'].append(gen)
+    stats['population'].append(len(wood.mush))
+
+    for arr, key in zip([caps, stems, myc, spores], ['cap', 'stem', 'mycelium', 'spore']):
+        stats[f'{key}_mean'].append(arr.mean() if len(arr) > 0 else 0)
+        stats[f'{key}_std'].append(arr.std() if len(arr) > 0 else 0)
+        stats[f'{key}_min'].append(arr.min() if len(arr) > 0 else 0)
+        stats[f'{key}_max'].append(arr.max() if len(arr) > 0 else 0)
+
+plt.ioff()
+
+# ---- Subplot fenotipi ----
+fig2, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
+axes = axes.flatten()
+phenotypes = ['cap', 'stem', 'mycelium', 'spore']
+colors = ['orange', 'saddlebrown', 'green', 'purple']
+
+for i, (pheno, color) in enumerate(zip(phenotypes, colors)):
+    ax = axes[i]
+    mean = np.array(stats[f'{pheno}_mean'])
+    std = np.array(stats[f'{pheno}_std'])
+    min_ = np.array(stats[f'{pheno}_min'])
+    max_ = np.array(stats[f'{pheno}_max'])
+
+    ax.plot(stats['gen'], mean, color=color, lw=2, label=f'{pheno} mean')
+    ax.fill_between(stats['gen'], mean - std, mean + std, color=color, alpha=0.2, label='±1 std')
+    ax.plot(stats['gen'], max_, color=color, lw=1, linestyle='--', label='max')
+    ax.plot(stats['gen'], min_, color=color, lw=1, linestyle='--', label='min')
+
+    ax.set_title(pheno.capitalize())
+    ax.set_ylabel(pheno.capitalize())
+    ax.legend(fontsize=8)
+
+# ---- Popolazione ----
+"""ax_pop = axes[3]
+ax_pop.plot(stats['gen'], stats['population'], color='black', lw=2)
+ax_pop.set_title("Population")
+ax_pop.set_ylabel("Number of mushrooms")"""
+
+for ax in axes:
+    ax.set_xlabel("Generation")
+
+plt.suptitle('Mushroom Phenotypes + Population over Generations', fontsize=16)
+plt.tight_layout(rect=[0, 0, 1, 0.95])
+plt.show()

@@ -70,7 +70,7 @@ class Wood:
             self.nutrients_map,
             extent=[0, self.size, 0, self.size],
             origin='lower',
-            cmap='Greys',
+            cmap='Blues',
             alpha=1,
         )
         if self.mush:
