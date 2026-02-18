@@ -1,0 +1,19 @@
+Cap Size:
+ + maggiore output riproduttivo
+ - costo energetico e rischio ambientale
+ * C ∈ [0,1] | spore_prodotte = base_spore * (1 + a * sqrt(C)) | costo_metabolico = b * C | rischio_ambientale = hazard_base * (1 + c * C)
+
+Mycelium Density:
++ input energia
+- mobilità ridotta e alta manutenzione
+* M ∈ [0,1] | energia_assorbita = nutrienti_patch * (1 + d * M) | costo_mantenimento = e * M | velocità_espansione = base_move / (1 + f * M)
+
+Stem Length:
++ dispersione spore migliore
+- instabilità e costo strutturale
+* S ∈ [0,1] | raggio_dispersione = base_radius * (1 + g * S) o P(lunga_distanza) ∝ S | prob_fallimento = hazard_base * (1 + h * S) | costo_strutturale = i * S
+
+Spore Size/Resistance:
++ soppravvivenza e tasso germinazione
+- minore numero e dispersione
+* R ∈ [0,1] | P_germinazione = base_germ * (1 + j * R) | sopravvivenza_spora = base_survival * (1 + k * R) | numero_spore = spore_prodotte / (1 + m * R) | raggio_dispersione *= (1 - n * R)

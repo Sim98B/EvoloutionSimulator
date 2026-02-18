@@ -50,7 +50,7 @@ while len(wood.mush) > 0:
             new_mushrooms.extend(offspring)
 
     wood.mush.extend(new_mushrooms)"""
-    print(f"Gen {gen + 1} | Survivors: {len(wood.mush)} | Fit medio: {np.mean([m.fitness for m in wood.mush]):.4f}")
+    print(f"Gen {gen + 1} | Survivors: {len(wood.mush)} | Fit medio: {np.mean([m.fitness for m in wood.mush]):.4f} | GR: {np.mean([m.mycelial_growth_rate for m in wood.mush]):.4f} | Den: {np.mean([m.branching_density for m in wood.mush]):.4f}")
     #print(
     #    f"Gen {gen + 1} | Survivors: {len(wood.mush)} | Fit medio: {np.mean([m.fitness for m in wood.mush]):.4f} | Cap: {np.mean([m.cap_size for m in wood.mush]):.4f} | Myc: {np.mean([m.mycelium_density for m in wood.mush]):.4f} | Stem: {np.mean([m.stem_length for m in wood.mush]):.4f} | Spore: {np.mean([m.spore_size for m in wood.mush]):.4f} | New: {len(new_mushrooms)}")
     gen += 1
