@@ -4,7 +4,7 @@ class Mush:
     def __init__(self, x:float | int, y: float):
         self.x = x
         self.y = y
-        total_size = np.random.normal(12,2)
+        total_size = np.random.normal(10,2)
         allocation = np.random.dirichlet(alpha=np.ones(4))
         self.cap, self.stem, self.mycelium, self.spore = total_size * allocation
         self.cap_genes = {
@@ -67,7 +67,8 @@ class Mush:
         local_food = wood_env.get_nutrients(self.x, self.y, radius, wood_env.nutrients_map)
         population_sorted = sorted(population, key=lambda m: m.mycelial_growth_rate * m.branching_density, reverse=True)
         competitors = self.compute_competitors(population_sorted)
-        share_factor = 1 / np.sqrt(competitors + 1)
+        #share_factor = 1 / np.sqrt(competitors + 1)
+        share_factor = 1 / (competitors + 1.5)
         energy_gain = self.energy_absorbed * local_food * share_factor
         cost = self.cap_energy_cost + self.stem_structural_cost + self.maintenance_cost
         risk_factor = 1 / (self.cap_risk + self.stem_fail_prob)
@@ -102,7 +103,7 @@ class Mush:
         spore_genes_list = mutate_genes(self.spore_genes)
 
         # ---- Dispersione e posizione ----
-        max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius * (wood_env.size / 5)
+        max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius + (wood_env.size / 10)
         min_radius = self.cap
         mean_dispersion = max_dispersion * 0.4
 
