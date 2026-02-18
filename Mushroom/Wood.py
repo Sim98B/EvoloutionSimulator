@@ -7,9 +7,9 @@ from scipy.ndimage import gaussian_filter
 from Mushroom import Mush
 from Mush import Mush
 
-#np.random.seed(0)
+"""#np.random.seed(0)
 plt.ion()
-fig, ax = plt.subplots()
+fig, ax = plt.subplots()"""
 
 class Wood:
     def __init__(self, size: int = 1, resolution: int = 2000, hatch:int = 10, humidity_clusters: int = None):
@@ -23,7 +23,7 @@ class Wood:
         field = np.random.rand(self.resolution, self.resolution)
         field = gaussian_filter(field, sigma=self.hatch)
         field = (field - field.min()) / (field.max() - field.min())
-        #field = field**1.5
+        #field = field**0.5
         return field
 
     def _generate_humidity_clusters(self, n_clusters):
@@ -104,10 +104,10 @@ class Wood:
         #plt.show()
         plt.tight_layout()
 
-wood = Wood(size = 50, resolution=200)
+"""wood = Wood(size = 50, resolution=200)
 for _ in range(10):
     wood.mush=[Mush(x=np.random.uniform(0,wood.size), y=np.random.uniform(0,wood.size)) for i in range(10)]
     wood.display(ax)
 
-    plt.pause(0.5)
+    plt.pause(0.5)"""
 

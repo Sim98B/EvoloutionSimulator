@@ -49,10 +49,21 @@ class Mush():
 
         self.fitness = 0.0
 
-    def compute_fitness(self, wood_env):
+    def compute_fitness(self, wood_env, population):
         radius = self.mycelium * 0.25
         local_humidity = wood_env.get_humidity(self.x, self.y, radius)
-        energy_gain = self.energy_absorbed * local_humidity
+        competitors = 0
+        for other in population:
+            if other is self:
+                continue
+            dist = np.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+            if dist < radius:
+                competitors += 1
+
+        # divisione equa (incluso se stesso)
+        share_factor = 1 / (competitors + 1)
+
+        energy_gain = self.energy_absorbed * local_humidity * share_factor
         cost = self.cap_energy_cost + self.stem_structural_cost + self.maintenance_cost
         risk_factor = 1 / (self.cap_risk + self.stem_fail_prob)
         self.fitness = (energy_gain - cost) * risk_factor
@@ -75,13 +86,16 @@ class Mush():
             new_mycelium = max(0.1, self.mycelium + np.random.normal(0, 0.5))
             new_spore = max(0.1, self.spore + np.random.normal(0, 0.5))
 
-            max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius * 10
+            max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius * 15
+            min_radius = self.cap
+            mean_dispersion = max_dispersion * 0.4
+            radius = min_radius + np.random.exponential(scale=mean_dispersion)
+            radius = min(radius, max_dispersion)
             angle = np.random.uniform(0, 2 * np.pi)
-            radius = np.random.uniform(0, max_dispersion)
             dx = radius * np.cos(angle)
             dy = radius * np.sin(angle)
-            new_x = np.clip(self.x + dx, 0, 1)
-            new_y = np.clip(self.y + dy, 0, 1)
+            new_x = np.clip(self.x + dx, 0, wood_env.size)
+            new_y = np.clip(self.y + dy, 0, wood_env.size)
 
             local_hum = wood_env.get_humidity(new_x, new_y, new_mycelium * 0.25)
             local_quality = local_hum
