@@ -12,8 +12,9 @@ class World:
     def place_plant(self, x, y, plant):
         self.plants.append((x, y, plant))
 
-    def show_world(self):
-        fig, ax = plt.subplots(figsize=(8, 8))
+    def show_world(self, ax):
+        ax.clear()
+        #fig, ax = plt.subplots(figsize=(8, 8))
         ax.set_xlim(0, self.width)
         ax.set_ylim(0, self.height)
         ax.set_aspect('equal')
@@ -30,7 +31,8 @@ class World:
             # facoltativo: piccola linea per l'altezza
             ax.plot([x, x], [y, y + p.height], color='darkgreen', lw=2)
 
-        plt.show()
+        #plt.show()
+        plt.tight_layout()
 
     def energy(self):
         rain_factor = np.random.uniform(0, 1)

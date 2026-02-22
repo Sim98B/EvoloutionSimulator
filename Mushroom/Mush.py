@@ -4,7 +4,7 @@ class Mush:
     def __init__(self, x:float | int, y: float):
         self.x = x
         self.y = y
-        total_size = np.random.normal(10,2)
+        total_size = np.random.normal(12,2)
         allocation = np.random.dirichlet(alpha=np.ones(4))
         self.cap, self.stem, self.mycelium, self.spore = total_size * allocation
         self.cap_genes = {
@@ -52,6 +52,7 @@ class Mush:
         self.spore_number = self.spore / (1 + self.spore_genes["m"] * self.spore)
         self.spore_dispersion_radius = self.spore * (1 - self.spore_genes["n"])
 
+        self.age = 0
         self.fitness = 0.0
 
     def compute_competitors(self, population):
@@ -103,7 +104,7 @@ class Mush:
         spore_genes_list = mutate_genes(self.spore_genes)
 
         # ---- Dispersione e posizione ----
-        max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius + (wood_env.size / 10)
+        max_dispersion = self.stem_dispersion_radius + self.spore_dispersion_radius + (wood_env.size / 5)
         min_radius = self.cap
         mean_dispersion = max_dispersion * 0.4
 

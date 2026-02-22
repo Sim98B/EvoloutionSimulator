@@ -3,8 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from Plant import Plant
 from World import World
+import matplotlib
+matplotlib.use("TkAgg")
 #np.random.seed(0)
 
+plt.ion()
+fig, ax = plt.subplots()
 # --- setup mondo ---
 size = 5
 world = World(width=size, height=size)
@@ -76,8 +80,9 @@ for day in range(500):
     else:
         stats_df.loc[len(stats_df)] = [day + 1] + [np.nan]*16
 
-    if day % 5 == 0 or day == 99:
-        world.show_world()
+    if day % 1 == 0 or day == 99:
+        world.show_world(ax)
+    plt.pause(0.1)
 
     new_plants = []
     for x, y, p in world.plants:

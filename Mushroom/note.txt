@@ -1,3 +1,22 @@
+################################### NUOVO SETTING ##################
+nascono piccoli
+crescendo assorbono sempre più energia
+se a na certa abbastanza energia si riproducono (e magari muoiono, informati sul ciclo di vita dei funghi)
+spore contengono genoma con piccole mutazioni
+in base a dove finiscono nascono/riescono a crescere ugualmente
+################################### AGGIORNAMENTO ##################
+Ife (micelio sotterraneo) c'è sempre e cresce in fretta (1 km/day) :TODO modellare ramificazione singola del micelio
+in condizioni ottimali corpo fruttifero (stem e cap)
+rilascio di spore
+Riproduzione:
+    1. Asessuata: se corpo fruttiferorilasciano spore che si diffondono con vento e se trovano
+       umidità, nutirmento e temperatura giusta gérmano. MOLTO RESISTENTI
+    2. Sessuata: funghi geneticamente diversi emettono segnali chimici che fanno crescere l'uno verso l'altro e si fondono;
+       meiosi nelle strutture riproduttive e nuove spore
+
+
+
+
 Cap Size:
  + maggiore output riproduttivo
  - costo energetico e rischio ambientale

@@ -1,23 +1,24 @@
 import numpy as np
 import matplotlib
+import pandas as pd
 
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from Mush import Mush
 from Wood import Wood
 
-np.random.seed(1)
+#np.random.seed(1)
 
 plt.ion()
 fig, ax = plt.subplots()
 
-mushrooms = 150
-generations = 150
+mushrooms = 300
+generations = 50
 survival_threshold = 0.3
 pause = 0.01
 
 # Inizializza il mondo e i funghi
-wood = Wood(size=100, resolution=200, hatch=3)#, humidity_clusters=15, organic_clusters=15)
+wood = Wood(size=100, resolution=200, hatch=3, humidity_clusters=10, organic_clusters=10)
 wood.mush = [Mush(x=np.random.uniform(0, wood.size), y=np.random.uniform(0, wood.size))
              for _ in range(mushrooms)]
 wood.display(ax)
@@ -37,11 +38,15 @@ for gen in range(generations):
     if len(wood.mush) == 0:
         print(f"Sim terminated after {gen} generations")
         break
+    #wood.humidity_map = wood._generate_field()
+    #wood.organic_map = wood._generate_field()
+    #wood.nutrients_map = (wood.humidity_map + wood.organic_map).astype(np.float32)
     for m in wood.mush:
         m.compute_fitness(wood, wood.mush)
     wood.mush = [m for m in wood.mush if m.fitness > survival_threshold]
     new_mushrooms = []
     for m in wood.mush:
+        m.age += 1
         if m.fitness >= survival_threshold + ((survival_threshold / 100) * 5):
             offspring = m.reproduce(wood)
             new_mushrooms.extend(offspring)
@@ -59,7 +64,7 @@ for gen in range(generations):
         stats[f'{key}_std'].append(arr.std() if len(arr) > 0 else 0)
         stats[f'{key}_min'].append(arr.min() if len(arr) > 0 else 0)
         stats[f'{key}_max'].append(arr.max() if len(arr) > 0 else 0)
-    print(gen + 1)
+    print(f"Gen: {gen} | Avg age: {np.mean([m.age for m in wood.mush]):.3f}")
 plt.ioff()
 
 fig2, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
@@ -91,3 +96,5 @@ for ax in axes:
 plt.suptitle('Mushroom Phenotypes + Population over Generations', fontsize=16)
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.show()
+
+pd.DataFrame(stats).to_csv('run.csv', index=False)

@@ -12,7 +12,7 @@ class Wood:
         self.resolution = resolution
         self.hatch = hatch
         self.humidity_map = self._generate_clusters(n_clusters=humidity_clusters) if humidity_clusters  else self._generate_field()
-        self.organic_map = self._generate_clusters(n_clusters=humidity_clusters) if organic_clusters else self._generate_field()
+        self.organic_map = self._generate_clusters(n_clusters=organic_clusters) if organic_clusters else self._generate_field()
         self.nutrients_map = (self.humidity_map + self.organic_map).astype(np.float32)
 
     def _generate_field(self):
