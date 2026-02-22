@@ -1,7 +1,7 @@
 ################################### NUOVO SETTING ##################
 nascono piccoli
 crescendo assorbono sempre più energia
-se a na certa abbastanza energia si riproducono (e magari muoiono, informati sul ciclo di vita dei funghi)
+se in un certo momento abbastanza energia si riproducono
 spore contengono genoma con piccole mutazioni
 in base a dove finiscono nascono/riescono a crescere ugualmente
 ################################### AGGIORNAMENTO ##################
