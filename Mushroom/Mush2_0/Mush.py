@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 class Mush:
-    def __init__(self, x:float | int, y: float):
+    def __init__(specie: str, self, x:float | int, y: float):
         self.x = x
         self.y = y
+        self.specie = specie if specie in ["Amanita Muscaria", "Boletus Edulis", "Cantharellus Cibarius"] else print("Specie non valida")
         self.mycelium = 0.1
 
-    def grow_mycelium(self, energy: float):
-        self.mycelium += energy
+
 
 plt.ion()
 fig, ax = plt.subplots()
