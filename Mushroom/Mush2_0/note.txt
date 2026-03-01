@@ -1,0 +1,260 @@
+Il mio obiettivo è generare un ambiente con dei biomi in modo da far emergere distintamente biomi fungo con caratteristiche fenotipiche, che partono da quelle genotipiche, in modo che possa assimilarli in 3 classi:
+1. Amanita muscaria: gambo alto e sottile, cappello largo con le lamelle, rosso
+2. Boletus edulis: gambo corto e tozzo, cappello meno ampio e poroso, marrone
+3. Cantharellus cibarius: gambo variabile unito al cappello che ha una forma conica per massimizzare la superficie lamellare e la produzione di spore, giallo
+Devo modellare 3 caratteristiche in modo che possano emergere queste 3 specie di funghi. Ad esempio il vantaggio evolutivo delle lamelle è che producono più spore rispetto ai pori ma magari in certe condizioni produrre meno spore va anche bene. Voglio modellare comportamenti del genere.
+Ti do anche queste info:
+🍄 Amanita muscaria
+
+pH: preferisce suoli acidi (≈ 4–6)
+Umidità: medio-alta, tollera ambienti freschi e umidi
+Temperatura: temperata-fredda, molto comune in zone boreali
+Ospiti: betulla, abete, pino
+
+🔬 È relativamente plastica, ma raramente prospera in suoli calcarei basici.
+
+Nel simulatore:
+Puoi modellarla con:
+	•	fitness massima per pH acido
+	•	curva gaussiana larga su umidità
+	•	penalità forte su pH > 7
+
+⸻
+
+🍄 Boletus edulis
+
+pH: leggermente acido → neutro (≈ 5–7)
+Umidità: alta ma con buon drenaggio
+Temperatura: temperata, fruttifica con escursione termica
+Ospiti: sia conifere che latifoglie
+
+🔬 È più generalista rispetto ad Amanita.
+
+Nel simulatore:
+	•	curva pH più ampia
+	•	fitness dipendente anche da variabile “drenaggio”
+	•	forte dipendenza da host-tree type
+
+⸻
+
+🍄 Cantharellus cibarius
+
+pH: acido → subacido (≈ 4–6)
+Umidità: costante ma non stagnante
+Temperatura: temperata, sensibile a siccità
+Ospiti: faggio, abete, pino
+
+🔬 È più sensibile alla siccità rispetto agli altri due.
+
+Nel simulatore:
+	•	curva umidità più stretta
+	•	penalità elevata sotto soglia di moisture
+	•	pH simile ad Amanita ma con minore tolleranza estrema
+
+
+Hai un obiettivo molto chiaro e ben strutturato: **modellare l'evoluzione di tre specie di funghi distinti** (Amanita, Boletus, Cantharellus) **tramite un ambiente che risponde a specifici parametri ambientali**, e che **emergano naturalmente** dalle dinamiche di fitness, selezione e geni.
+Per raggiungere questo obiettivo, dobbiamo **integrare i requisiti ambientali (pH, umidità, temperatura, ospiti)** nei **parametri di fitness** e **dipendenze fenotipiche** del modello esistente. Inoltre, dobbiamo **modellare le caratteristiche fenotipiche** (gambi, cappelli, spore) in modo che **l’evoluzione porti a specie distinte**.
+## ✅ Modellazione delle tre specie: approccio evolutivo
+### 🔍 **1. Amanita muscaria**
+- **Fenotipo**: gambo alto e sottile, cappello largo, lamelle (→ più spore)
+- **Vantaggio evolutivo**: **molti spori** (grande produzione di spore) → alta riproduzione
+- **Ambiente**: acido (pH 4–6), umidità media-alta, temperatura fredda
+- **Dipendenze**: betulla, abete, pino
+
+#### 📌 Come inserire nel modello:
+- **Fitness**:
+    - `+1` per ogni unità di **pH < 7** (ma **pH < 5** → +0.5, **pH > 6** → -0.3)
+    - `+1` per **umidità > 0.6** (umidità media-alta)
+    - `+0.5` per **temperatura < 10°C** (freddo)
+
+- **Geni**:
+    - (rischio) → alto → **aumenta il rischio di errore**, ma **aumenta la produzione di spore** `cap_genes["c"]`
+    - → alto → **spore più resistenti** (ma anche più costose) `spore_genes["k"]`
+    - → basso → **dispersione più ampia** (beneficio in aree umide) `spore_genes["n"]`
+
+- **Fenotipo**:
+    - alto (cappello largo) `cap`
+    - alto (gambi alti e sottili) `stem`
+    - alto (per massimizzare la riproduzione) `spore`
+
+✅ Esempio di funzione di fitness:``` python
+# In compute_fitness()
+pH_penalty = 0.0
+if wood_env.pH > 6:
+    pH_penalty += 0.3
+elif wood_env.pH < 4:
+    pH_penalty += 0.2
+# Umidità
+if wood_env.humidity < 0.4:
+    humidity_penalty = 0.2
+elif wood_env.humidity > 0.8:
+    humidity_penalty = 0.1
+else:
+    humidity_penalty = 0.0
+# Temperatura
+if wood_env.temperature > 15:
+    temp_penalty = 0.1
+else:
+    temp_penalty = 0.0
+# Totale fitness
+energy_gain += (1 - pH_penalty - humidity_penalty - temp_penalty) * local_food
+```
+
+
+🔍 2. Boletus edulis
+Fenotipo: gambo corto e tozzo, cappello più piccolo, poro (→ meno spore, ma più stabile)
+Vantaggio evolutivo: resistenza a siccità e drenaggio, tolleranza a condizioni variabili
+Ambiente: pH neutro (5–7), umidità alta ma drenata, temperatura temperata
+Dipendenze: conifere e latifoglie
+📌 Come inserire nel modello:
+Fitness:
++1 per pH in [5,7]
++0.5 per drenaggio > 0.5 (drenaggio buono)
++0.3 per temperatura in [10,20]°C
+Geni:
+mycelium_genes["e"] (costo manutenzione) → alto → costo più alto, ma stabilità
+branching_density → basso → meno ramificazione, più stabilità
+spore_genes["k"] → basso → spore meno resistenti, ma maggiori risparmi energetici
+Fenotipo:
+cap medio
+stem basso (corto e tozzo)
+spore medio (meno di Amanita)
+✅ Esempio di fitness:``` python
+# In compute_fitness()
+pH_ok = 1.0 if 5 <= wood_env.pH <= 7 else 0.0
+drenaggio_ok = 0.5 if wood_env.drainage > 0.5 else 0.0
+temp_ok = 0.5 if 10 <= wood_env.temperature <= 20 else 0.0
+energy_gain += (pH_ok + drenaggio_ok + temp_ok) * local_food
+```
+
+
+🔍 3. Cantharellus cibarius
+Fenotipo: gambo medio, cappello piccolo, sensibile alla siccità
+Vantaggio evolutivo: sopravvive in aree umide e non stagnanti, alta tolleranza a siccità
+Ambiente: pH acido (4–6), umidità costante ma non stagnante, temperatura temperata
+Dipendenze: faggio, abete, pino
+📌 Come inserire nel modello:
+Fitness:
++1 per umidità > 0.5 (umidità costante)
++0.5 per umidità non stagnante (umidità variabile, non stagnante)
++0.3 per pH in [4,6]
+penalità se umidità < 0.4 → -0.4
+Geni:
+spore_genes["n"] → alto → dispersione limitata (per evitare siccità)
+stem_genes["i"] → alto → struttura più robusta
+mycelium_genes["d"] → alto → assorbimento più efficiente in condizioni umide
+Fenotipo:
+cap medio
+stem medio
+spore basso (ma resistente)
+✅ Esempio di fitness:``` python
+# In compute_fitness()
+if wood_env.humidity < 0.4:
+    humidity_penalty = 0.4
+elif wood_env.humidity < 0.5:
+    humidity_penalty = 0.1
+else:
+    humidity_penalty = 0.0
+# Umidità non stagnante
+if wood_env.moisture_stagnant == False:
+    energy_gain += 0.3
+```
+
+
+✅ Integrazione nel codice esistente
+📂 Modifica in Wood.py (aggiunta di parametri ambientali)
+File: Wood.py Modifica: aggiungere attributi nel __init__ e nel metodo get_nutrients per riferire il fitness a parametri ambientali``` python
+# ... esistente ...
+class Wood:
+    def __init__(self, size: int = 1, resolution: int = 2000, hatch: int = 10,
+                  humidity_clusters: int = None, organic_clusters: int = None,
+                  pH: float = 5.0, humidity: float = 0.5, drainage: float = 0.5,
+                  moisture_stagnant: bool = False):
+        self.size = size
+        self.mush = []
+        self.resolution = resolution
+        self.hatch = hatch
+        self.pH = pH
+        self.humidity = humidity
+        self.drainage = drainage
+        self.moisture_stagnant = moisture_stagnant
+        self.humidity_map = self._generate_clusters(n_clusters=humidity_clusters) if humidity_clusters else self._generate_field()
+        self.organic_map = self._generate_clusters(n_clusters=organic_clusters) if organic_clusters else self._generate_field()
+        self.nutrients_map = (self.humidity_map + self.organic_map).astype(np.float32)
+```
+
+✅ Modifica in compute_fitness (in Mush.py)``` python
+def compute_fitness(self, wood_env, population):
+    # ... esistente ...
+    # Aggiungi i parametri ambientali
+    pH_penalty = 0.0
+    if wood_env.pH > 7:
+        pH_penalty += 0.3
+    elif wood_env.pH < 4:
+        pH_penalty += 0.2
+    # Umidità
+    if wood_env.humidity < 0.4:
+        humidity_penalty = 0.2
+    elif wood_env.humidity > 0.8:
+        humidity_penalty = 0.1
+    else:
+        humidity_penalty = 0.0
+    # Drenaggio
+    if wood_env.drainage < 0.5:
+        drenaggio_penalty = 0.1
+    else:
+        drenaggio_penalty = 0.0
+    # Temperatura
+    temp_ok = 0.5 if 10 <= wood_env.temperature <= 20 else 0.0
+    # Totale fitness
+    energy_gain = self.energy_absorbed * local_food * share_factor
+    cost = self.cap_energy_cost + self.stem_structural_cost + self.maintenance_cost
+    risk_factor = 1 / (self.cap_risk + self.stem_fail_prob)
+    self.fitness = (energy_gain - cost) * risk_factor
+    # Aggiungi penalità ambientale
+    self.fitness *= (1 - pH_penalty - humidity_penalty - drenaggio_penalty)
+    return self.fitness
+```
+
+✅ Modifica in reproduce (per differenziare i figli)``` python
+def reproduce(self, wood_env):
+    # ... esistente ...
+    # Aggiungi condizioni di germinazione basate su ambiente
+    if wood_env.moisture_stagnant:
+        germ_prob *= 0.5  # meno probabilità di germinare in aree stagnanti
+    if wood_env.humidity < 0.4:
+        germ_prob *= 0.3  # penalità per siccità
+    # ... restante ...
+```
+
+
+✅ Come si manifestano le specie nel tempo?
+Specie
+Fitness in ambiente acido (pH 4–6)
+Fitness in umidità stagnante
+Fitness in siccità
+Spore
+Gambi
+Amanita
+✅ Massimo
+✅ Alto
+❌ Basso
+🚀 Molti
+🚀 Alto e sottile
+Boletus
+✅ Alto
+✅ Alto (con drenaggio)
+✅ Alto (con drenaggio)
+⚠️ Medio
+🚀 Corto e tozzo
+Cantharellus
+✅ Alto
+✅ Alto (non stagnante)
+❌ Basso
+⚠️ Medio (resistente)
+🚀 Medio
+✅ Conclusione: Amanita si espande in aree umide e acide, con molti spori Boletus si espande in aree con drenaggio, anche in pH neutro Cantharellus si espande in aree umide non stagnanti, con tolleranza alla siccità
+✅ Finito.
+Hai un sistema di evoluzione di funghi basato su fitness ambientale, dove ogni specie si adatta a un tipo di ambiente specifico.
+Il codice è già strutturato per simulare l'adattamento fenotipico e la selezione naturale in un ambiente dinamico.
+Se vuoi, posso aiutarti a aggiungere un grafico di adattamento, o a salvare i dati per specie, o a aggiungere una funzione di mutazione più sofisticata. Solo chiedi! 🍄

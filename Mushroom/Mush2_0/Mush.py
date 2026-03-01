@@ -3,33 +3,44 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 class Mush:
-    def __init__(specie: str, self, x:float | int, y: float):
+    SPECIES_INFO = {
+        "Amanita Muscaria": {
+            "color": "red",
+            "tree_weights": [1.0, 0.9, 0.9, 0.3, 0.0, 0.0],
+            "humidity_opt": (0.65, 0.9),
+            "temp_opt": (10, 20),
+            "ph_opt": (5.0, 6.5)
+        },
+        "Boletus Edulis": {
+            "color": "brown",
+            "tree_weights": [0.8, 0.5, 0.3, 0.9, 1.0, 1.0],
+            "humidity_opt": (0.35, 0.55),
+            "temp_opt": (15, 24),
+            "ph_opt": (5.0, 6.5)
+        },
+        "Cantharellus Cibarius": {
+            "color": "yellow",
+            "tree_weights": [0.3, 0.5, 0.5, 1.0, 1.0, 1.0],
+            "humidity_opt": (0.3, 0.5),
+            "temp_opt": (10, 18),
+            "ph_opt": (4.5, 6.5)
+        }
+    }
+    def __init__(self, specie: str, x: float | int, y: float):
         self.x = x
         self.y = y
-        self.specie = specie if specie in ["Amanita Muscaria", "Boletus Edulis", "Cantharellus Cibarius"] else print("Specie non valida")
-        self.mycelium = 0.1
+        if specie not in Mush.SPECIES_INFO:
+            raise ValueError(f"Specie non valida: {specie}")
+        self.specie = specie
+        info = Mush.SPECIES_INFO[specie]
+        self.color = info["color"]
+        self.mycelium = np.random.normal(loc=3, scale=1)
+        self.preferred_trees = info["preferred_trees"]
+        self.humidity_opt = info["humidity_opt"]
+        self.temp_opt = info["temp_opt"]
+        self.ph_opt = info["ph_opt"]
 
-
-
-plt.ion()
-fig, ax = plt.subplots()
-m = Mush(2.5,2.5)
-for _ in range(10):
-    ax.clear()
-    #m = Mush(0.5,0.5)
-    plt.scatter(m.x, m.y)
-    cap = patches.Circle(
-        (m.x, m.y),
-        m.mycelium,
-        color='red',
-        alpha=0.2
-    )
-    e = np.random.random(0,0.1)
-    print(e)
-    m.grow_mycelium(energy=e)
-    ax.add_patch(cap)
-    ax.set_xlim(0, 5)
-    ax.set_ylim(0, 5)
-    ax.set_aspect('equal')
-    #print(m.mycelium)
-    plt.pause(1)
+"""for _ in range(10):
+    specie = np.random.choice(["Amanita Muscaria", "Boletus Edulis", "Cantharellus Cibarius"])
+    m = Mush(x=0,y=0,specie=specie)
+    print(f"{specie} | Mycelium: {m.mycelium}")"""
